@@ -1,40 +1,26 @@
+import {apiKey}  from "./key/apiKey.js"
 const moviesContainer = document.querySelector('.movies')
+const searchIcon = document.querySelector('.searchIcon')
 
-const movies = [
-  {
-    image: 'https://img.elo7.com.br/product/original/3FBA809/big-poster-filme-batman-2022-90x60-cm-lo002-poster-batman.jpg',
-    title: 'Batman',
-    rating: 9.2,
-    year: 2022,
-    description: 'Descrição do filme…',
-    isFavorited: true
-  },
-  {
-    image: 'https://upload.wikimedia.org/wikipedia/pt/thumb/9/9b/Avengers_Endgame.jpg/250px-Avengers_Endgame.jpg',
-    title: 'Avengers',
-    rating: 9.2,
-    year: 2019,
-    description:  'Descrição do filme…',
-    isFavorited: false
-  },
-  {
-    image: 'https://upload.wikimedia.org/wikipedia/en/1/17/Doctor_Strange_in_the_Multiverse_of_Madness_poster.jpg',
-    title: 'Doctor Strange',
-    rating: 9.2,
-    year: 2022,
-    description: 'Descrição do filme…',
-    isFavorited: false
-  },
-  ]
-  
-  window.onload = function (){
-    movies.forEach(movie => renderMovie(movie))
-  }
+
+
+
+async function getPopularMovies(){
+  const url = `https://api.themoviedb.org/3/movie/550?api_key=${apiKey}&language=en-US`
+  const fetchResponse =  await fetch(url)
+  const {result} = await fetchResponse.json()
+    
+  return result
+}
+
+getPopularMovies()
+
 
 function renderMovie(movie) {
  
-  const { title, image, rating, year, description, isFavorited } = movie
-
+  const { title, poster_path, vote_average, release_date, overview } = movie
+  const year = new Date(release_date).getFullYear()
+  // const isFavorited = false - será implemantado depois
  
   const movieElement = document.createElement('div')
   movieElement.classList.add('movie')
@@ -47,7 +33,7 @@ function renderMovie(movie) {
   const movieImageContainer = document.createElement('div')
   movieImageContainer.classList.add('movie-image')
   const movieImage = document.createElement('img')
-  movieImage.src = image
+  movieImage.src = poster_path
   movieImage.alt = `${title} Poster`
   movieImageContainer.appendChild(movieImage)
   movieInformation.appendChild(movieImageContainer)
@@ -72,7 +58,7 @@ function renderMovie(movie) {
 
   ratingFavorites.appendChild(ratingMovie)
   const movieRate = document.createElement('span')
-  movieRate.textContent = rating
+  movieRate.textContent = vote_average
   ratingMovie.appendChild( movieRate)
   ratingMovie.appendChild(starImage)
   movieInformation.appendChild(ratingFavorites)
@@ -84,7 +70,7 @@ function renderMovie(movie) {
   const favorite = document.createElement('div')
   favorite.classList.add('favorite')
   const favoriteImage = document.createElement('img')
-  favoriteImage.src = isFavorited ? 'images/heart-fill.svg' : 'images/heart.svg'
+  favoriteImage.src = isFavorited  ? 'images/heart-fill.svg' : 'images/heart.svg'
   favoriteImage.alt = 'Heart'
   favoriteImage.classList.add('favoriteImage') 
   const favoriteText = document.createElement('span')
@@ -101,9 +87,14 @@ function renderMovie(movie) {
   movieElement.appendChild(movieDescription)
 
   const movieDescriptionSpan = document.createElement('span')
-  movieDescriptionSpan.textContent = description
+  movieDescriptionSpan.textContent = overview
   movieDescription.appendChild( movieDescriptionSpan)
 
   movieElement.appendChild(movieInformation)
   movieElement.appendChild(movieDescription)
+}
+
+window.onload =  function() {
+  const movies =  getPopularMovies()
+  movies.forEach(movie => renderMovie(movie))
 }
