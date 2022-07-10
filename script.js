@@ -4,14 +4,12 @@ const moviesContainer = document.querySelector('.movies')
 const searchIcon = document.querySelector('.searchIcon')
 const input = document.querySelector('input')
 
-
 searchIcon.addEventListener('click', searchMovie)
 
 input.addEventListener('keyup', function(event) {
   console.log(event.key)
   if (event.key === 'Enter'){
    searchMovie()
-   return
   }
  })
 
@@ -22,6 +20,8 @@ async function searchMovie(){
     cleanAllMovies()
     const movies = await  searchMovieByName(inputValue)
     movies.forEach(movie => renderMovie(movie))
+  }else{
+    cleanAllMovies()
   }
 }
 
@@ -29,6 +29,20 @@ function cleanAllMovies(){
   moviesContainer.innerHTML = ''
 }
 
+function saveToLocalStorage (movie){
+  const movies = []
+
+  movies.push(movie)
+
+  const moviesJSON = JSON.stringify(movies)
+
+  localStorage.setItem("favorites", moviesJSON)
+
+}
+
+function getFavoriteMovies(){
+  return JSON.parse(localStorage.getItem("favorites"))
+}
 
 async function searchMovieByName(title){
   const url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${title}&language=en-US&page=1`
@@ -51,12 +65,14 @@ window.onload =  async function() {
   movies.forEach(movie => renderMovie(movie))
 }
 
+
+
 function renderMovie(movie) {
 
   const { title, poster_path, vote_average, release_date, overview } = movie
   const year = new Date(release_date).getFullYear()
   const image = `https://image.tmdb.org/t/p/w500${poster_path}`
-  // const isFavorited = false - será implemantado depois
+  let isFavorited = false 
 
   const movieElement = document.createElement('div')
   movieElement.classList.add('movie')
@@ -101,12 +117,12 @@ function renderMovie(movie) {
 
 
 
-
+ 
 
   const favorite = document.createElement('div')
   favorite.classList.add('favorite')
   const favoriteImage = document.createElement('img')
-  // favoriteImage.src = isFavorited  ? 'images/heart-fill.svg' : 'images/heart.svg'
+  favoriteImage.src = isFavorited  ? 'images/heart-fill.svg' : 'images/heart.svg'
   favoriteImage.alt = 'Heart'
   favoriteImage.classList.add('favoriteImage')
   const favoriteText = document.createElement('span')
@@ -115,8 +131,20 @@ function renderMovie(movie) {
   favorite.appendChild(favoriteImage)
   favorite.appendChild(favoriteText)
   movieInformation.appendChild(favorite)
-
-
+  
+  
+  favoriteImage.addEventListener('click', function(){
+    if(isFavorited === false){
+      isFavorited = true
+      favoriteImage.src = 'images/heart-fill.svg'
+      saveToLocalStorage(movie)
+      getFavoriteMovies()
+    } else{
+      isFavorited = false
+      favoriteImage.src = 'images/heart.svg'
+    }
+})
+  
 
   const movieDescription = document.createElement('div')
   movieDescription.classList.add('movie-description')
