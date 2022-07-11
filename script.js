@@ -20,8 +20,6 @@ async function searchMovie(){
     cleanAllMovies()
     const movies = await  searchMovieByName(inputValue)
     movies.forEach(movie => renderMovie(movie))
-  }else{
-    cleanAllMovies()
   }
 }
 
@@ -29,8 +27,39 @@ function cleanAllMovies(){
   moviesContainer.innerHTML = ''
 }
 
+
+async function searchMovieByName(title){
+  const url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${title}&language=pt-BR&page=1`
+  const fetchResponse = await fetch(url)
+  const {results} = await fetchResponse.json()
+  return results
+}
+
+async function getPopularMovies(){
+  const url = `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=pt-BR&page=1`  
+  const fetchResponse =  await fetch(url)
+  const {results} = await fetchResponse.json()
+  
+  return results
+}
+
+function favoriteButtonPressed(event, movie){
+  const favoriteState = {
+    favorited: 'images/heart-fill.svg',
+    notFavorited: 'images/heart.svg'
+  }
+  
+  if(event.target.src.includes(favoriteState.notFavorited)){
+    event.target.src = favoriteState.favorited
+    saveToLocalStorage(movie)
+  }else{
+    event.target.src = favoriteState.notFavorited
+    removeToLocalStorage(movie.id)
+  }
+}
+
 function saveToLocalStorage (movie){
-  const movies = []
+  const movies = getFavoriteMovies() || []
 
   movies.push(movie)
 
@@ -44,21 +73,17 @@ function getFavoriteMovies(){
   return JSON.parse(localStorage.getItem("favorites"))
 }
 
-async function searchMovieByName(title){
-  const url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${title}&language=en-US&page=1`
-  const fetchResponse = await fetch(url)
-  const {results} = await fetchResponse.json()
-  return results
+function checkMovieIsFavorited(id){
+  const movies = getFavoriteMovies() || []
+  return movies.find(movie => movie.id == id)
 }
 
-async function getPopularMovies(){
-  const url = `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=en-US&page=1`  
-  const fetchResponse =  await fetch(url)
-  const {results} = await fetchResponse.json()
-
-  return results
+function removeToLocalStorage(id){
+  const movies = getFavoriteMovies() || []
+  const findMovie = movies.find(movie => movie.id == id)
+  const newMovies = movies.filter(movie => movie.id != findMovie.id)
+  localStorage.setItem("favorites", JSON.stringify(newMovies))
 }
-
 
 window.onload =  async function() {
   const movies = await getPopularMovies()
@@ -66,13 +91,13 @@ window.onload =  async function() {
 }
 
 
-
 function renderMovie(movie) {
 
-  const { title, poster_path, vote_average, release_date, overview } = movie
+  const {id, title, poster_path, vote_average, release_date, overview } = movie
   const year = new Date(release_date).getFullYear()
   const image = `https://image.tmdb.org/t/p/w500${poster_path}`
-  let isFavorited = false 
+  const isFavorited = checkMovieIsFavorited(id)
+
 
   const movieElement = document.createElement('div')
   movieElement.classList.add('movie')
@@ -117,14 +142,13 @@ function renderMovie(movie) {
 
 
 
- 
-
   const favorite = document.createElement('div')
   favorite.classList.add('favorite')
   const favoriteImage = document.createElement('img')
   favoriteImage.src = isFavorited  ? 'images/heart-fill.svg' : 'images/heart.svg'
   favoriteImage.alt = 'Heart'
   favoriteImage.classList.add('favoriteImage')
+  favoriteImage.addEventListener('click', (event) => favoriteButtonPressed(event, movie))
   const favoriteText = document.createElement('span')
   favoriteText.classList.add('movie-favorite')
   favoriteText.textContent = 'Favoritar'
@@ -132,20 +156,6 @@ function renderMovie(movie) {
   favorite.appendChild(favoriteText)
   movieInformation.appendChild(favorite)
   
-  
-  favoriteImage.addEventListener('click', function(){
-    if(isFavorited === false){
-      isFavorited = true
-      favoriteImage.src = 'images/heart-fill.svg'
-      saveToLocalStorage(movie)
-      getFavoriteMovies()
-    } else{
-      isFavorited = false
-      favoriteImage.src = 'images/heart.svg'
-    }
-})
-  
-
   const movieDescription = document.createElement('div')
   movieDescription.classList.add('movie-description')
   movieElement.appendChild(movieDescription)
