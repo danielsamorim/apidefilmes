@@ -1,116 +1,11 @@
-import {apiKey}  from "./key/apiKey.js"
+import {checkMovieIsFavorited, favoriteButtonPressed} from './isFavorite.js'
 
 const moviesContainer = document.querySelector('.movies')
+
 const searchIcon = document.querySelector('.searchIcon')
 const input = document.querySelector('input')
 const checkbox = document.querySelector('input[type="checkbox"]')
 
-checkbox.addEventListener('change', checkCheckboxStatus)
-
-searchIcon.addEventListener('click', searchMovie)
-
-
-input.addEventListener('keyup', function(event) {
-  console.log(event.key)
-  if (event.key === 'Enter'){
-   searchMovie()
-  }
- })
-
-
-async function searchMovie(){
-  const inputValue = input.value
-  if(inputValue != ''){
-    cleanAllMovies()
-    const movies = await  searchMovieByName(inputValue)
-    movies.forEach(movie => renderMovie(movie))
-  }
-}
-
-function cleanAllMovies(){
-  moviesContainer.innerHTML = ''
-}
-
-function checkCheckboxStatus() {
-  const isChecked = checkbox.checked
-  if (isChecked) {
-    cleanAllMovies()
-    const movies = getFavoriteMovies() || []
-    movies.forEach(movie => renderMovie(movie))
-  } else {
-    cleanAllMovies()
-    getAllPopularMovies()
-  }
-}
-
-async function searchMovieByName(title){
-  const url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${title}&language=pt-BR&page=1`
-  const fetchResponse = await fetch(url)
-  const {results} = await fetchResponse.json()
-  return results
-}
-
-async function getPopularMovies(){
-  const url = `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=pt-BR&page=1`  
-  const fetchResponse =  await fetch(url)
-  const {results} = await fetchResponse.json()
-  
-  return results
-}
-
-function favoriteButtonPressed(event, movie){
-  const favoriteState = {
-    favorited: 'images/heart-fill.svg',
-    notFavorited: 'images/heart.svg'
-  }
-  
-  if(event.target.src.includes(favoriteState.notFavorited)){
-    event.target.src = favoriteState.favorited
-    saveToLocalStorage(movie)
-  }else{
-    event.target.src = favoriteState.notFavorited
-    removeToLocalStorage(movie.id)
-  }
-}
-
-function saveToLocalStorage (movie){
-  const movies = getFavoriteMovies() || []
-
-  movies.push(movie)
-
-  const moviesJSON = JSON.stringify(movies)
-
-  localStorage.setItem("favorites", moviesJSON)
-
-}
-
-function getFavoriteMovies(){
-  return JSON.parse(localStorage.getItem("favorites"))
-}
-
-function checkMovieIsFavorited(id){
-  const movies = getFavoriteMovies() || []
-  return movies.find(movie => movie.id == id)
-}
-
-function removeToLocalStorage(id){
-  const movies = getFavoriteMovies() || []
-  const findMovie = movies.find(movie => movie.id == id)
-  const newMovies = movies.filter(movie => movie.id != findMovie.id)
-  localStorage.setItem("favorites", JSON.stringify(newMovies))
-}
-
-
-async function getAllPopularMovies() {
-  const movies = await getPopularMovies()
-  movies.forEach(movie => renderMovie(movie))
-}
-
-
-window.onload =  async function() {
-  const movies = await getPopularMovies()
-  movies.forEach(movie => renderMovie(movie))
-}
 
 
 function renderMovie(movie) {
@@ -189,3 +84,5 @@ function renderMovie(movie) {
   movieElement.appendChild(movieInformation)
   movieElement.appendChild(movieDescription)
 }
+
+export {moviesContainer, searchIcon, input, checkbox, renderMovie}
